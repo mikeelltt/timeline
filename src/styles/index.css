@@ -1,0 +1,43 @@
+.timeline {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: #EEE;
+}
+
+.line {
+  position: absolute;
+  top: 0;
+  height: 10px;
+  width: 1px;
+  border-left: solid 1px #000;
+}
+
+.items {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.item {
+  position: absolute;
+  top: 20px;
+}
+
+.item__title {
+
+}
+
+.item_selected {
+  color: #F00;
+}
+
+.item_flight {
+  background: #ee4800;
+  margin-top: 5px;
+  height: 2px;
+}
