@@ -4,15 +4,20 @@
   top: 0;
   right: 0;
   bottom: 0;
-  background: #EEE;
+  background: #FBFBFB;
 }
 
-.line {
+.periods__header {
+  height: 20px;
+  border-bottom: solid 1px #EEE;
+}
+
+.period-item {
   position: absolute;
   top: 0;
-  height: 10px;
-  width: 1px;
-  border-left: solid 1px #000;
+  bottom: 0;
+  border-left: solid 1px #EEE;
+  text-align: center;
 }
 
 .items {

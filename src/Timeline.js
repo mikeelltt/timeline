@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import DateHelper from './helpers/DateHelper';
-import HeaderItem from './components/HeaderItem';
-import Item from "./components/Item";
+import PeriodItem from './components/PeriodItem';
+import CategoryLine from "./components/CategoryLine";
+import Item from './components/Item';
 
 import './styles/index.css';
 
 class Timeline extends Component {
   static propTypes = {
+    categories: PropTypes.array,
     items: PropTypes.array.isRequired,
     start: PropTypes.number.isRequired,
     end: PropTypes.number.isRequired,
@@ -47,39 +49,50 @@ class Timeline extends Component {
 
   componentDidMount() {
     window.addEventListener('resize', this.handleResize);
-    window.addEventListener('mouseup', this.handleMouseUp);
+    document.addEventListener('mouseup', this.handleMouseUp);
 
     this.resize();
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
-    window.removeEventListener('mouseup', this.handleMouseUp);
+    document.removeEventListener('mouseup', this.handleMouseUp);
   }
 
   // Methods
+
+  posToTime(offsetX, start = this.state.timeStart) {
+    const { timeDelta, canvasWidth } = this.state;
+    return start + offsetX * timeDelta / canvasWidth;
+  }
+
+  timeToPos(point) {
+    const { timeStart, timeDelta, canvasWidth } = this.state;
+    return (point - timeStart) / timeDelta * canvasWidth;
+  }
+
+  widthFromTime(end, start = 0) {
+    const { timeDelta, canvasWidth } = this.state;
+    return (end - start) / timeDelta * canvasWidth;
+  }
 
   getUnit() {
     // TODO: code which calculates the correct unit
     return 'day';
   }
 
-  drawHeaderItems() {
-    const { timeStart, timeEnd, timeDelta, canvasWidth } = this.state;
+  drawPeriods() {
+    const { timeStart, timeEnd } = this.state;
     const unit = this.getUnit();
     const points = DateHelper.iterator(timeStart, timeEnd, unit);
     const items = [];
 
     for (const { current, next } of points) {
-      const offset = (current - timeStart) / timeDelta;
-      const left = offset * canvasWidth;
-      const width = (next - current) * canvasWidth / timeDelta;
-
       items.push(
-        <HeaderItem
+        <PeriodItem
           key={`line-${current.valueOf()}`}
-          left={left}
-          width={width}
+          left={this.timeToPos(current)}
+          width={this.widthFromTime(next, current)}
           label={current.format('D.MM')}
         />
       );
@@ -90,15 +103,14 @@ class Timeline extends Component {
 
   drawItems() {
     const { items } = this.props;
-    const { timeStart, timeEnd, timeDelta, canvasWidth, activeItem, mouseOffsetX } = this.state;
-    const ratio = canvasWidth / timeDelta;
+    const { timeStart, timeEnd, activeItem, mouseOffsetX } = this.state;
     const unit = this.getUnit();
     const visibleItems = items.filter(item => item.start < timeEnd && item.end > timeStart);
 
     return visibleItems.map(item => {
       const isActive = activeItem && item === activeItem;
       const itemStart = isActive
-        ? DateHelper.startOf(item.start + timeDelta * mouseOffsetX / canvasWidth, unit)
+        ? DateHelper.startOf(this.posToTime(mouseOffsetX, item.start), unit)
         : item.start;
 
       return (
@@ -106,19 +118,32 @@ class Timeline extends Component {
           key={item.id}
           item={item}
           active={isActive}
-          position={(itemStart - timeStart) * ratio}
-          width={(item.end - item.start) * ratio}
+          left={this.timeToPos(itemStart)}
+          width={this.widthFromTime(item.end, item.start)}
           onInteract={this.handleItemInteract}
         />
       );
     });
   }
 
+  drawCategoryLines() {
+    const { categories } = this.props;
+
+    return categories.map((category) => {
+      return (
+        <CategoryLine
+          key={category.id}
+          title={category.title}
+        />
+      );
+    });
+  }
+
   updateActiveItemPosition() {
-    const { canvasWidth, timeDelta, activeItem, mouseOffsetX } = this.state;
+    const { activeItem, mouseOffsetX } = this.state;
     const unit = this.getUnit();
-    const start = DateHelper.startOf(activeItem.start + timeDelta * mouseOffsetX / canvasWidth, unit);
-    const end = activeItem.end - activeItem.start + start;
+    const start = DateHelper.startOf(this.posToTime(mouseOffsetX, activeItem.start), unit);
+    const end = (activeItem.end - activeItem.start) + start;
 
     this.props.onItemMoved({
       id: activeItem.id,
@@ -222,8 +247,12 @@ class Timeline extends Component {
         onMouseDown={this.handleMouseDown}
         onMouseMove={this.handleMouseMove}
       >
-        <div className="header">
-          {this.drawHeaderItems()}
+        <div className="periods">
+          <div className="periods__header" />
+          {this.drawPeriods()}
+        </div>
+        <div className="category-lines">
+          {this.drawCategoryLines()}
         </div>
         <div className="items">
           {this.drawItems()}

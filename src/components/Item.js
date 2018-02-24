@@ -12,15 +12,12 @@ class Item extends Component {
   }
 
   render() {
-    const { item: { title, type = 'default' }, active, position, width } = this.props;
-    const style = {
-      left: position,
-      width
-    };
+    const { item: { title, type }, active, left, width } = this.props;
+    const style = { left, width };
 
     return (
       <div
-        className={`item item_${type}${active ? ' active' : ''}`}
+        className={`item${type ? ` item_${type}` : ''}${active ? ' active' : ''}`}
         style={style}
         onMouseDown={this.handleMouseDown}
       >
