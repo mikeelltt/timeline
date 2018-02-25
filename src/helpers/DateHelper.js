@@ -9,6 +9,14 @@ class DateHelper {
     return moment(datetime).startOf(unit);
   }
 
+  static diff(datetimeA, datetimeB, unit) {
+    return moment(datetimeA).diff(moment(datetimeB), unit);
+  }
+
+  static format(datetime, str) {
+    return moment(datetime).format(str);
+  }
+
   static *iterator(start, end, unit) {
     let current = this.startOf(start, unit);
 

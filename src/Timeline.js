@@ -77,8 +77,26 @@ class Timeline extends Component {
   }
 
   getUnit() {
-    // TODO: code which calculates the correct unit
-    return 'day';
+    const { timeStart, timeEnd, canvasWidth } = this.state;
+    const numberOfDays = DateHelper.diff(timeEnd, timeStart, 'hour');
+    const pixelsPerHour = canvasWidth / numberOfDays;
+
+    if (pixelsPerHour > 30) {
+      return 'hour';
+    }
+
+    if (pixelsPerHour > 2) {
+      return 'day';
+    }
+
+    return 'month';
+  }
+
+  getPeriodLabel(point) {
+    const unit = this.getUnit();
+    const format = unit === 'hour' ? 'HH' : (unit === 'day' ? 'D.MM' : 'MMMM');
+
+    return DateHelper.format(point, format);
   }
 
   drawPeriods() {
@@ -93,7 +111,7 @@ class Timeline extends Component {
           key={`line-${current.valueOf()}`}
           left={this.timeToPos(current)}
           width={this.widthFromTime(next, current)}
-          label={current.format('D.MM')}
+          label={this.getPeriodLabel(current)}
         />
       );
     }
@@ -104,13 +122,12 @@ class Timeline extends Component {
   drawItems() {
     const { items } = this.props;
     const { timeStart, timeEnd, activeItem, mouseOffsetX } = this.state;
-    const unit = this.getUnit();
     const visibleItems = items.filter(item => item.start < timeEnd && item.end > timeStart);
 
     return visibleItems.map(item => {
       const isActive = activeItem && item === activeItem;
       const itemStart = isActive
-        ? DateHelper.startOf(this.posToTime(mouseOffsetX, item.start), unit)
+        ? DateHelper.startOf(this.posToTime(mouseOffsetX, item.start), 'minute')
         : item.start;
 
       return (
@@ -141,8 +158,7 @@ class Timeline extends Component {
 
   updateActiveItemPosition() {
     const { activeItem, mouseOffsetX } = this.state;
-    const unit = this.getUnit();
-    const start = DateHelper.startOf(this.posToTime(mouseOffsetX, activeItem.start), unit);
+    const start = DateHelper.startOf(this.posToTime(mouseOffsetX, activeItem.start), 'minute');
     const end = (activeItem.end - activeItem.start) + start;
 
     this.props.onItemMoved({
